@@ -1,0 +1,2 @@
+Yes, the graph can be divided into 2 cliques
+no, graph cannot be divided into 2; cliques
