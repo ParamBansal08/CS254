@@ -1,0 +1,3 @@
+yes,loop detected
+yes,loop detected
+no loop
