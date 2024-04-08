@@ -1,64 +1,118 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int graph[18][18][2];
-long long dp[1 << 18][18][2];
+int parent[100005];
 
-long long minCost(int n, int m, int mask, int prev, int col)
+vector<int> present;
+
+int edg;
+
+struct edge {
+	int src, dest, weight;
+} edges[100005];
+
+bool cmp(edge x, edge y)
 {
-    if (mask == ((1 << n) - 1)) {
-        return 0;
-    }
-    if (dp[mask][prev][col == 1] != 0) {
-        return dp[mask][prev][col == 1];
-    }
-
-    long long ans = 1e9;
-
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < 2; j++) {
-            if (graph[prev][i][j] && !(mask & (1 << i)) && (j != col)) {
-                long long z = graph[prev][i][j] + minCost(n, m, mask | (1 << i), i, j);
-                ans = min(z, ans);
-            }
-        }
-    }
-
-    return dp[mask][prev][col == 1] = ans;
+	return x.weight < y.weight;
 }
 
-void makeGraph(vector<pair<pair<int, int>, pair<int, char>>>& vp, int m) {
-    for (int i = 0; i < m; i++) {
-        int a = vp[i].first.first - 1;
-        int b = vp[i].first.second - 1;
-        int cost = vp[i].second.first;
-        char color = vp[i].second.second;
-        graph[a][b][color == 'W'] = cost;
-        graph[b][a][color == 'W'] = cost;
-    }
+void initialise(int n)
+{
+	for (int i = 1; i <= n; i++)
+		parent[i] = i;             //make self parent
 }
 
-int getCost(int n, int m) {
-    long long ans = 1e9;
-    for (int i = 0; i < n; i++) {
-        ans = min(ans, minCost(n, m, 1 << i, i, 2));
-    }
-    return ans != 1e9 ? ans : -1;
+int find(int x)
+{
+	if (parent[x] == x)
+		return x;
+	return parent[x] = find(parent[x]);
+}
+
+int union1(int i, int sum)
+{
+	int x, y;
+	x = find(edges[i].src);
+	y = find(edges[i].dest);
+	if (x != y) {
+		parent[x] = y;
+
+		present.push_back(i);
+
+		sum += edges[i].weight;
+	}
+	return sum;
+}
+
+int union2(int i, int sum)
+{
+	int x, y;
+	x = find(edges[i].src);
+	y = find(edges[i].dest);
+	if (x != y) {
+		parent[x] = y;
+
+		sum += edges[i].weight;
+		edg++;
+	}
+	return sum;
 }
 
 int main()
 {
-    
-    freopen("output3.txt", "w", stdout);
-    int n = 3, m = 4;
-    vector<pair<pair<int, int>, pair<int, char> > > vp = {
-        { { 1, 2 }, { 2, 'B' } },
-        { { 1, 2 }, { 3, 'W' } },
-        { { 2, 3 }, { 4, 'W' } },
-        { { 2, 3 }, { 5, 'B' } }
-    };
+	int V, E;
+	V = 5;
+	E = 8;
 
-    makeGraph(vp, m);
-    cout << getCost(n, m) << '\n';
-    return 0;
+	initialise(V);
+
+	vector<int> source = { 1, 3, 2, 3,
+						2, 5, 1, 3 };
+	vector<int> destination = { 3, 4, 4,
+								2, 5, 4, 2, 5 };
+	vector<int> weights = { 75, 51, 19,
+							95, 42, 31, 9, 66 };
+	for (int i = 0; i < E; i++) {
+		edges[i].src = source[i];
+		edges[i].dest = destination[i];
+		edges[i].weight = weights[i];
+	}
+
+	sort(edges, edges + E, cmp);
+
+	int sum = 0;
+	for (int i = 0; i < E; i++) {
+		sum = union1(i, sum);
+	}
+
+	cout << "MST: " << sum << "\n";
+
+	int sec_best_mst = INT_MAX;
+
+	sum = 0;
+	int j;
+	for (j = 0; j < present.size(); j++) {
+		initialise(V);
+		edg = 0;
+		for (int i = 0; i < E; i++) {
+
+			if (i == present[j])
+				continue;
+			sum = union2(i, sum);
+		}
+
+		if (edg != V - 1) {
+			sum = 0;
+			continue;
+		}
+
+		if (sec_best_mst > sum)
+			sec_best_mst = sum;
+		sum = 0;
+	}
+
+
+	cout << "Second Best MST: "
+		<< sec_best_mst << "\n";
+	return 0;
 }
